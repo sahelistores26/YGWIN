@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DmWin - Game</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f121b; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 480px; background: #181b26; min-height: 100vh; position: relative; padding-bottom: 60px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .hidden { display: none !important; }
+        
+        /* Auth Screens */
+        .auth-screen { padding: 30px 20px; display: flex; flex-direction: column; justify-content: center; height: 100vh; }
+        .auth-screen h2 { text-align: center; margin-bottom: 25px; color: #2493ff; font-size: 24px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; color: #8f9bb3; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px 15px; background: #222634; border: 1px solid #2f354a; border-radius: 8px; color: #fff; font-size: 15px; }
+        .btn { width: 100%; padding: 14px; background: #2493ff; border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-yellow { background: #e0b32e; color: #000; }
+        .btn-red { background: #e74c3c; }
+        .btn-green { background: #2ecc71; }
+        .switch-text { text-align: center; margin-top: 15px; font-size: 14px; color: #8f9bb3; }
+        .switch-text span { color: #2493ff; cursor: pointer; font-weight: bold; }
+
+        /* Game Header & Wallet */
+        .header { background: #181b26; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282d3d; }
+        .logo { font-size: 20px; font-weight: bold; font-style: italic; color: #fff; letter-spacing: 1px; }
+        .wallet-card { background: linear-gradient(135deg, #2493ff, #1b6ec2); margin: 15px; padding: 20px; border-radius: 12px; text-align: center; }
+        .wallet-card h3 { font-size: 14px; color: #d0e8ff; font-weight: normal; }
+        .wallet-card h1 { font-size: 28px; margin: 8px 0; }
+        .wallet-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .wallet-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* Game Section */
+        .game-section { padding: 0 15px; }
+        .timer-box { background: #222634; border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #2f354a; }
+        .bet-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
+        .bet-btn { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; color: #fff; }
+        .bet-btn.big { background: #e0912e; }
+        .bet-btn.small { background: #2493ff; }
+
+        /* History Table */
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #222634; border-radius: 8px; overflow: hidden; font-size: 14px; }
+        .history-table th, .history-table td { padding: 10px; text-align: center; border-bottom: 1px solid #2f354a; }
+        .history-table th { background: #2a3042; color: #8f9bb3; font-size: 12px; }
+
+        /* Popups / Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #222634; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; border: 1px solid #2f354a; }
+        .modal-content h3 { margin-bottom: 15px; color: #fff; }
+        .modal-content input { width: 100%; padding: 10px; background: #181b26; border: 1px solid #2f354a; border-radius: 6px; color: #fff; margin-bottom: 15px; font-size: 15px; }
+        .qr-container { background: #fff; padding: 10px; display: inline-block; border-radius: 6px; margin-bottom: 15px; }
+        .qr-container img { width: 150px; height: 150px; display: block; }
+
+        /* Bottom Nav */
+        .nav-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: #181b26; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #282d3d; }
+        .nav-item { color: #8f9bb3; font-size: 12px; text-align: center; cursor: pointer; }
+        .nav-item.active { color: #2493ff; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <!-- REGISTER SCREEN -->
+    <div id="registerScreen" class="auth-screen">
+        <h2>DmWin - Register</h2>
+        <div class="input-group">
+            <label>Phone Number</label>
+            <input type="number" id="regPhone" placeholder="Enter phone number">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="regPass" placeholder="Set password">
+        </div>
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="regCpass" placeholder="Confirm password">
+        </div>
+        <button class="btn" onclick="registerUser()">Register</button>
+        <div class="switch-text">I have an account? <span onclick="showScreen('loginScreen')">Login</span></div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="auth-screen hidden">
+        <h2>DmWin - Login</h2>
+        <div class="input-group">
+            <label>Phone Number</label>
+            <input type="number" id="logPhone" placeholder="Enter phone number">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="logPass" placeholder="Enter password">
+        </div>
+        <button class="btn" onclick="loginUser()">Log In</button>
+        <div class="switch-text">Don't have an account? <span onclick="showScreen('registerScreen')">Register</span></div>
+    </div>
+
+    <!-- GAME MAIN SCREEN -->
+    <div id="gameScreen" class="hidden">
+        <div class="header">
+            <div class="logo">DmWin</div>
+            <div id="userDisplay" style="font-size: 13px; color: #8f9bb3;"></div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>Wallet Balance</h3>
+            <h1>₹<span id="walletBalance">0.00</span></h1>
+            <div class="wallet-btns">
+                <button class="btn-red" onclick="openDeposit()">Deposit</button>
+                <button class="btn-yellow" onclick="openWithdraw()">Withdraw</button>
+            </div>
+        </div>
+
+        <div class="game-section">
+            <div class="timer-box">
+                <div>
+                    <div style="font-size: 12px; color: #8f9bb3;">WinGo 1 Min</div>
+                    <div id="periodNumber" style="font-size: 14px; font-weight: bold; margin-top: 3px;">--</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; color: #8f9bb3;">Time remaining</div>
+                    <div id="timerClock" style="font-size: 18px; font-weight: bold; color: #2493ff;">00:00</div>
+                </div>
+            </div>
+
+            <div class="bet-buttons">
+                <button class="bet-btn big" onclick="placeBet('Big')">BIG</button>
+                <button class="bet-btn small" onclick="placeBet('Small')">SMALL</button>
+            </div>
+
+            <div style="font-size: 15px; font-weight: bold; margin-top: 15px;">Last 10 Results History</div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Number</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <!-- History inserted dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="showScreen('gameScreen')">🏠 Home</div>
+            <div class="nav-item" onclick="openDepositHistory()">📜 Deposit Hist</div>
+            <div class="nav-item" onclick="openWithdrawHistory()">📜 Withdraw Hist</div>
+            <div class="nav-item" onclick="logout()">🚪 Logout</div>
+        </div>
+    </div>
+
+    <!-- DEPOSIT MODAL -->
+    <div id="depositModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Deposit Funds (Min ₹10)</h3>
+            <div class="qr-container">
+                <img id="adminQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DefaultQR" alt="QR Code">
+            </div>
+            <input type="number" id="depAmount" placeholder="Enter Deposit Amount (₹)">
+            <input type="text" id="depUtr" placeholder="Enter 12-Digit UTR Number">
+            <button class="btn btn-green" onclick="submitDeposit()">Submit Deposit</button>
+            <button class="btn" style="background:#444; margin-top:5px;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- WITHDRAW MODAL -->
+    <div id="withdrawModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Withdraw Funds</h3>
+            <input type="text" id="witName" placeholder="Your Full Name">
+            <input type="text" id="witUpi" placeholder="Your UPI ID">
+            <input type="number" id="witAmount" placeholder="Amount to Withdraw">
+            <button class="btn btn-yellow" onclick="submitWithdraw()">Request Withdraw</button>
+            <button class="btn" style="background:#444; margin-top:5px;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- HISTORY POPUP MODAL -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 420px; max-height: 80vh; overflow-y: auto;">
+            <h3 id="histModalTitle">History</h3>
+            <div id="histModalContent" style="font-size: 13px; text-align: left;"></div>
+            <button class="btn" style="background:#444; margin-top:15px;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // LocalStorage Data Management
+    let db = JSON.parse(localStorage.getItem('dmwin_db')) || {
+        users: [],
+        deposits: [],
+        withdraws: [],
+        history: [],
+        qr: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DefaultUPIpayment",
+        forcedResult: ""
+    };
+
+    function saveDb() {
+        localStorage.setItem('dmwin_db', JSON.stringify(db));
+    }
+
+    let currentUser = JSON.parse(localStorage.getItem('dmwin_current_user')) || null;
+
+    window.onload = function() {
+        if (currentUser) {
+            showScreen('gameScreen');
+            initGame();
+        } else {
+            showScreen('loginScreen');
+        }
+    };
+
+    function showScreen(screenId) {
+        document.getElementById('registerScreen').classList.add('hidden');
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        
+        if(screenId === 'gameScreen') {
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('userDisplay').innerText = `Phone: ${currentUser.phone} | UID: ${currentUser.uid}`;
+            document.getElementById('walletBalance').innerText = currentUser.balance.toFixed(2);
+        } else {
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+    }
+
+    function registerUser() {
+        let phone = document.getElementById('regPhone').value.trim();
+        let pass = document.getElementById('regPass').value.trim();
+        let cpass = document.getElementById('regCpass').value.trim();
+
+        if(!phone || !pass || !cpass) { alert("Please fill all fields"); return; }
+        if(pass !== cpass) { alert("Password and Confirm Password do not match!"); return; }
+
+        let existing = db.users.find(u => u.phone === phone);
+        if(existing) { alert("Number has already registered!"); return; }
+
+        let newUser = {
+            phone: phone,
+            pass: pass,
+            balance: 0,
+            uid: Math.floor(100000 + Math.random() * 900000)
+        };
+        db.users.push(newUser);
+        saveDb();
+        alert("Registration Successful! Please login.");
+        showScreen('loginScreen');
+    }
+
+    function loginUser() {
+        let phone = document.getElementById('logPhone').value.trim();
+        let pass = document.getElementById('logPass').value.trim();
+
+        let user = db.users.find(u => u.phone === phone);
+        if(!user) { alert("Number not registered!"); return; }
+        if(user.pass !== pass) { alert("Incorrect password!"); return; }
+
+        currentUser = user;
+        localStorage.setItem('dmwin_current_user', JSON.stringify(currentUser));
+        showScreen('gameScreen');
+        initGame();
+    }
+
+    function logout() {
+        localStorage.removeItem('dmwin_current_user');
+        currentUser = null;
+        showScreen('loginScreen');
+    }
+
+    // Timer & Game Logic (Based on your Java snippet structure adapted for JS)
+    let currentPeriodStr = "";
+    let gameInterval = null;
+
+    function initGame() {
+        if(gameInterval) clearInterval(gameInterval);
+        
+        gameInterval = setInterval(() => {
+            let now = new Date();
+            // Using IST timezone simulation
+            let utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            let istDate = new Date(utc + (3600000 * 5.5));
+
+            let seconds = istDate.getSeconds();
+            let remainingSeconds = 60 - seconds;
+            let minutes = istDate.getMinutes();
+            let totalMinutes = istDate.getHours() * 60 + minutes;
+
+            let yyyyMMdd = istDate.toISOString().slice(0,10).replace(/-/g,'');
+            currentPeriodStr = yyyyMMdd + "1000" + (10001 + totalMinutes - 330);
+
+            document.getElementById('periodNumber').innerText = currentPeriodStr;
+            let formattedSec = remainingSeconds < 10 ? "0" + remainingSeconds : remainingSeconds;
+            document.getElementById('timerClock').innerText = `00:${formattedSec}`;
+
+            // Sync database state
+            let latestDb = JSON.parse(localStorage.getItem('dmwin_db'));
+            db = latestDb;
+            let liveUser = db.users.find(u => u.phone === currentUser.phone);
+            if(liveUser) {
+                currentUser = liveUser;
+                localStorage.setItem('dmwin_current_user', JSON.stringify(currentUser));
+                document.getElementById('walletBalance').innerText = currentUser.balance.toFixed(2);
+            }
+
+            renderHistory();
+
+            // When timer reaches 0, process round if pending
+            if(remainingSeconds === 60) {
+                processRoundResult();
+            }
+        }, 1000);
+    }
+
+    let selectedBetType = null;
+    function placeBet(type) {
+        selectedBetType = type;
+        let amtStr = prompt(`You selected ${type}. Enter bet amount (Min ₹1):`);
+        if(!amtStr) return;
+        let amount = parseFloat(amtStr);
+
+        if(isNaN(amount) || amount < 1) { alert("Minimum bet is ₹1"); return; }
+        if(currentUser.balance < amount) {
+            alert("Insufficient balance! Please deposit to play.");
+            openDeposit();
+            return;
+        }
+
+        // Deduct balance
+        currentUser.balance -= amount;
+        updateUserInDb();
+
+        // Save active bet for this period
+        let bets = JSON.parse(localStorage.getItem('dmwin_active_bets')) || [];
+        bets.push({
+            phone: currentUser.phone,
+            period: currentPeriodStr,
+            choice: type,
+            amount: amount
+        });
+        localStorage.setItem('dmwin_active_bets', JSON.stringify(bets));
+        alert(`Successfully placed bet of ₹${amount} on ${type}!`);
+    }
+
+    function processRoundResult() {
+        let bets = JSON.parse(localStorage.getItem('dmwin_active_bets')) || [];
+        let periodBets = bets.filter(b => b.period === currentPeriodStr);
+
+        // Determine outcome
+        let result = db.forcedResult;
+        if(result !== "Big" && result !== "Small") {
+            result = Math.random() < 0.5 ? "Big" : "Small";
+        }
+        let randNum = result === "Big" ? Math.floor(Math.random() * 5) + 5 : Math.floor(Math.random() * 5);
+
+        // Push to history
+        db.history.unshift({ period: currentPeriodStr, number: randNum, result: result });
+        if(db.history.length > 10) db.history.pop();
+        db.forcedResult = ""; // reset control
+        saveDb();
+
+        // Evaluate bets
+        periodBets.forEach(b => {
+            let u = db.users.find(usr => usr.phone === b.phone);
+            if(u) {
+                if(b.choice === result) {
+                    let winAmt = b.amount * 0.96; // 96% profit added
+                    u.balance += (b.amount + winAmt);
+                } // If loss, amount is already deducted when bet was placed.
+            }
+        });
+        saveDb();
+    }
+
+    function renderHistory() {
+        let tbody = document.getElementById('historyBody');
+        tbody.innerHTML = "";
+        let hist = db.history.slice(0, 10);
+        hist.forEach(h => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td>${h.period}</td><td>${h.number}</td><td style="color:${h.result==='Big'?'#e0912e':'#2493ff'}; font-weight:bold;">${h.result}</td>`;
+            tbody.innerHTML += tr;
+        });
+    }
+
+    function updateUserInDb() {
+        let idx = db.users.findIndex(u => u.phone === currentUser.phone);
+        if(idx !== -1) {
+            db.users[idx] = currentUser;
+            saveDb();
+            document.getElementById('walletBalance').innerText = currentUser.balance.toFixed(2);
+        }
+    }
+
+    // Deposit & Withdraw Modals
+    function openDeposit() {
+        document.getElementById('adminQrImg').src = db.qr;
+        document.getElementById('depositModal').classList.remove('hidden');
+    }
+
+    function submitDeposit() {
+        let amount = parseFloat(document.getElementById('depAmount').value);
+        let utr = document.getElementById('depUtr').value.trim();
+
+        if(isNaN(amount) || amount < 10) { alert("Minimum deposit is ₹10"); return; }
+        if(utr.length !== 12) { alert("Invalid UTR! Must be exactly 12 digits."); return; }
+
+        db.deposits.push({
+            id: Date.now(),
+            phone: currentUser.phone,
+            amount: amount,
+            utr: utr,
+            status: 'Pending'
+        });
+        saveDb();
+        alert("Please Wait Patiently Your Amount been add after check Your payment.");
+        closeModals();
+    }
+
+    function openWithdraw() {
+        document.getElementById('withdrawModal').classList.remove('hidden');
+    }
+
+    function submitWithdraw() {
+        let name = document.getElementById('witName').value.trim();
+        let upi = document.getElementById('witUpi').value.trim();
+        let amount = parseFloat(document.getElementById('witAmount').value);
+
+        if(!name || !upi || isNaN(amount)) { alert("Please fill all details"); return; }
+        if(amount > currentUser.balance) { alert("Insufficient balance!"); return; }
+
+        db.withdraws.push({
+            id: Date.now(),
+            phone: currentUser.phone,
+            name: name,
+            upi: upi,
+            amount: amount,
+            status: 'Pending'
+        });
+        saveDb();
+        alert("Withdraw request submitted successfully!");
+        closeModals();
+    }
+
+    function openDepositHistory() {
+        let myDeps = db.deposits.filter(d => d.phone === currentUser.phone);
+        let html = myDeps.length === 0 ? "No deposit history found." : "";
+        myDeps.forEach(d => {
+            let color = d.status === 'Approved' ? '#2ecc71' : (d.status === 'Rejected' ? '#e74c3c' : '#e0b32e');
+            html += `<div style="background:#181b26; padding:10px; margin-bottom:8px; border-radius:6px;">
+                Amount: ₹${d.amount} | UTR: ${d.utr}<br>Status: <span style="color:${color}; font-weight:bold;">${d.status === 'Approved' ? 'Deposit Success' : (d.status === 'Rejected' ? 'Failed' : 'Pending')}</span>
+            </div>`;
+        });
+        document.getElementById('histModalTitle').innerText = "Deposit History";
+        document.getElementById('histModalContent').innerHTML = html;
+        document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function openWithdrawHistory() {
+        let myWits = db.withdraws.filter(w => w.phone === currentUser.phone);
+        let html = myWits.length === 0 ? "No withdraw history found." : "";
+        myWits.forEach(w => {
+            let color = w.status === 'Approved' ? '#2ecc71' : (w.status === 'Rejected' ? '#e74c3c' : '#e0b32e');
+            let statText = w.status === 'Approved' ? 'Withdraw Credited ✅' : (w.status === 'Rejected' ? 'Withdraw Rejected ❌' : 'Pending');
+            html += `<div style="background:#181b26; padding:10px; margin-bottom:8px; border-radius:6px;">
+                Amount: ₹${w.amount} | UPI: ${w.upi}<br>Status: <span style="color:${color}; font-weight:bold;">${statText}</span>
+            </div>`;
+        });
+        document.getElementById('histModalTitle').innerText = "Withdraw History";
+        document.getElementById('histModalContent').innerHTML = html;
+        document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    }
+</script>
+</body>
+</html>
