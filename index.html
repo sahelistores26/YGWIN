@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RXWin - Game</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #0f121b; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .container { width: 100%; max-width: 480px; background: #181b26; min-height: 100vh; position: relative; padding-bottom: 70px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .hidden { display: none !important; }
+        
+        /* Auth Screens */
+        .auth-screen { padding: 30px 20px; display: flex; flex-direction: column; justify-content: center; height: 100vh; }
+        .auth-screen h2 { text-align: center; margin-bottom: 25px; color: #2493ff; font-size: 24px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; color: #8f9bb3; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px 15px; background: #222634; border: 1px solid #2f354a; border-radius: 8px; color: #fff; font-size: 15px; outline: none; }
+        .btn { width: 100%; padding: 14px; background: #2493ff; border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-yellow { background: #e0b32e; color: #000; }
+        .btn-red { background: #e74c3c; }
+        .btn-green { background: #2ecc71; }
+        .switch-text { text-align: center; margin-top: 15px; font-size: 14px; color: #8f9bb3; }
+        .switch-text span { color: #2493ff; cursor: pointer; font-weight: bold; }
+
+        /* Game Header & Wallet */
+        .header { background: #181b26; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282d3d; }
+        .logo { font-size: 20px; font-weight: bold; font-style: italic; color: #fff; letter-spacing: 1px; cursor: pointer; }
+        .wallet-card { background: linear-gradient(135deg, #2493ff, #1b6ec2); margin: 15px; padding: 20px; border-radius: 12px; text-align: center; }
+        .wallet-card h3 { font-size: 14px; color: #d0e8ff; font-weight: normal; }
+        .wallet-card h1 { font-size: 28px; margin: 8px 0; }
+        .wallet-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .wallet-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* Game Section */
+        .game-section { padding: 0 15px; }
+        .timer-box { background: #222634; border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #2f354a; }
+        .bet-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
+        .bet-btn { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; color: #fff; }
+        .bet-btn.big { background: #e0912e; }
+        .bet-btn.small { background: #2493ff; }
+
+        /* History Table */
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #222634; border-radius: 8px; overflow: hidden; font-size: 14px; }
+        .history-table th, .history-table td { padding: 10px; text-align: center; border-bottom: 1px solid #2f354a; }
+        .history-table th { background: #2a3042; color: #8f9bb3; font-size: 12px; }
+
+        /* Popups / Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #222634; padding: 25px; border-radius: 12px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #2f354a; max-height: 85vh; overflow-y: auto; }
+        .modal-content h3 { margin-bottom: 15px; color: #fff; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; background: #181b26; border: 1px solid #2f354a; border-radius: 6px; color: #fff; margin-bottom: 12px; font-size: 15px; outline: none; }
+        .qr-container { background: #fff; padding: 10px; display: inline-block; border-radius: 6px; margin-bottom: 15px; }
+        .qr-container img { width: 140px; height: 140px; display: block; }
+
+        /* Bottom Nav */
+        .nav-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: #181b26; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #282d3d; z-index: 10; }
+        .nav-item { color: #8f9bb3; font-size: 12px; text-align: center; cursor: pointer; }
+        .nav-item.active { color: #2493ff; }
+        
+        /* Admin specific styles */
+        .admin-card { background: #222634; border: 1px solid #2f354a; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: left; font-size: 13px; }
+        .admin-card span { font-weight: bold; color: #2493ff; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <!-- REGISTER SCREEN -->
+    <div id="registerScreen" class="auth-screen hidden">
+        <h2>RXWin - Register</h2>
+        <div class="input-group">
+            <label>Phone Number</label>
+            <input type="number" id="regPhone" placeholder="Enter phone number">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="regPass" placeholder="Set password">
+        </div>
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="regCpass" placeholder="Confirm password">
+        </div>
+        <button class="btn" onclick="registerUser()">Register</button>
+        <div class="switch-text">I have an account? <span onclick="switchScreen('loginScreen')">Login</span></div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="auth-screen hidden">
+        <h2>RXWin - Login</h2>
+        <div class="input-group">
+            <label>Phone Number / Admin ID</label>
+            <input type="text" id="logPhone" placeholder="Enter phone number">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="logPass" placeholder="Enter password">
+        </div>
+        <button class="btn" onclick="loginUser()">Log In</button>
+        <div class="switch-text">Don't have an account? <span onclick="switchScreen('registerScreen')">Register</span></div>
+        <div class="switch-text" style="margin-top: 25px;"><span onclick="openAdminLoginModal()" style="color: #e0b32e;">🔒 Admin Login Portal</span></div>
+    </div>
+
+    <!-- GAME MAIN SCREEN -->
+    <div id="gameScreen" class="hidden">
+        <div class="header">
+            <div class="logo" onclick="secretAdminAccess()">RXWin</div>
+            <div id="userDisplay" style="font-size: 13px; color: #8f9bb3;"></div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>Wallet Balance</h3>
+            <h1>₹<span id="walletBalance">0.00</span></h1>
+            <div class="wallet-btns">
+                <button class="btn-red" onclick="openDeposit()">Deposit</button>
+                <button class="btn-yellow" onclick="openWithdraw()">Withdraw</button>
+            </div>
+        </div>
+
+        <div class="game-section">
+            <div class="timer-box">
+                <div>
+                    <div style="font-size: 12px; color: #8f9bb3;">WinGo 1 Min</div>
+                    <div id="periodNumber" style="font-size: 14px; font-weight: bold; margin-top: 3px;">--</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; color: #8f9bb3;">Time remaining</div>
+                    <div id="timerClock" style="font-size: 18px; font-weight: bold; color: #2493ff;">00:00</div>
+                </div>
+            </div>
+
+            <div class="bet-buttons">
+                <button class="bet-btn big" onclick="placeBet('Big')">BIG</button>
+                <button class="bet-btn small" onclick="placeBet('Small')">SMALL</button>
+            </div>
+
+            <div style="font-size: 15px; font-weight: bold; margin-top: 15px;">Last 10 Results History</div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Number</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <!-- History inserted dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="switchScreen('gameScreen')">🏠 Home</div>
+            <div class="nav-item" onclick="openDepositHistory()">📜 Deposit Hist</div>
+            <div class="nav-item" onclick="openWithdrawHistory()">📜 Withdraw Hist</div>
+            <div class="nav-item" onclick="logout()">🚪 Logout</div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL SCREEN -->
+    <div id="adminScreen" class="hidden" style="padding: 15px; padding-bottom: 70px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="color: #e0b32e; font-size: 20px;">RXWin Admin Panel</h2>
+            <button class="btn-red" style="padding: 6px 12px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="logout()">Logout</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <div class="admin-card" style="text-align:center;">
+                <div style="color: #8f9bb3; font-size: 11px;">Total Users</div>
+                <div id="admTotalUsers" style="font-size: 18px; font-weight:bold; margin-top:4px;">0</div>
+            </div>
+            <div class="admin-card" style="text-align:center;">
+                <div style="color: #8f9bb3; font-size: 11px;">Completed Rounds</div>
+                <div id="admTotalRounds" style="font-size: 18px; font-weight:bold; margin-top:4px;">0</div>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <div><strong>Period & Timer Control</strong></div>
+            <div style="margin-top: 5px; color: #8f9bb3;">Current Period: <span id="admCurrentPeriod" style="color:#fff;">--</span></div>
+            <div style="margin-top: 3px; color: #8f9bb3;">Next Outcome Override:</div>
+            <select id="admForceOutcome" style="width:100%; padding:8px; background:#181b26; border:1px solid #2f354a; color:#fff; border-radius:4px; margin-top:5px;">
+                <option value="">Random / Natural</option>
+                <option value="Big">Force BIG</option>
+                <option value="Small">Force SMALL</option>
+            </select>
+            <button class="btn" style="padding: 8px; margin-top: 8px;" onclick="saveAdminOverride()">Save Override</button>
+        </div>
+
+        <div class="admin-card">
+            <div><strong>User Management & Activation</strong></div>
+            <div id="admUserList" style="margin-top: 8px; max-height: 150px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="admin-card">
+            <div><strong>Deposit Approvals</strong></div>
+            <div id="admDepositList" style="margin-top: 8px; max-height: 150px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="admin-card">
+            <div><strong>Withdrawal Approvals</strong></div>
+            <div id="admWithdrawList" style="margin-top: 8px; max-height: 150px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="switchScreen('adminScreen')">⚙️ Control Panel</div>
+            <div class="nav-item" onclick="logout()">🚪 Exit Admin</div>
+        </div>
+    </div>
+
+    <!-- DEPOSIT MODAL -->
+    <div id="depositModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Deposit Funds (Min ₹10)</h3>
+            <div class="qr-container">
+                <img id="adminQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RXWinOfficialUPIpayment" alt="QR Code">
+            </div>
+            <input type="number" id="depAmount" placeholder="Enter Deposit Amount (₹)">
+            <input type="text" id="depUtr" placeholder="Enter 12-Digit UTR Number">
+            <button class="btn btn-green" onclick="submitDeposit()">Submit Deposit</button>
+            <button class="btn" style="background:#444; margin-top:5px;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- WITHDRAW MODAL -->
+    <div id="withdrawModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Withdraw Funds</h3>
+            <input type="text" id="witName" placeholder="Your Full Name">
+            <input type="text" id="witUpi" placeholder="Your UPI ID">
+            <input type="number" id="witAmount" placeholder="Amount to Withdraw">
+            <button class="btn btn-yellow" onclick="submitWithdraw()">Request Withdraw</button>
+            <button class="btn" style="background:#444; margin-top:5px;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- HISTORY POPUP MODAL -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 420px; max-height: 80vh; overflow-y: auto;">
+            <h3 id="histModalTitle">History</h3>
+            <div id="histModalContent" style="font-size: 13px; text-align: left;"></div>
+            <button class="btn" style="background:#444; margin-top:15px;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global Database Structure
+    let db = JSON.parse(localStorage.getItem('rxwin_db')) || {
+        users: [],
+        deposits: [],
+        withdraws: [],
+        history: [],
+        activeBets: [],
+        qr: "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RXWinOfficialUPIpayment",
+        forcedResult: ""
+    };
+
+    function saveDb() {
+        localStorage.setItem('rxwin_db', JSON.stringify(db));
+    }
+
+    let currentUser = JSON.parse(localStorage.getItem('rxwin_current_user')) || null;
+    let currentScreen = localStorage.getItem('rxwin_current_screen') || null;
+
+    // Initialization & State Restoration on Load
+    window.onload = function() {
+        // Run background global period processor instantly
+        checkAndProcessGlobalRounds();
+        setInterval(checkAndProcessGlobalRounds, 1000);
+
+        if (currentUser) {
+            if (currentUser.isAdmin) {
+                switchScreen('adminScreen');
+            } else {
+                switchScreen(currentScreen || 'gameScreen');
+            }
+        } else {
+            switchScreen('loginScreen');
+        }
+    };
+
+    function switchScreen(screenId) {
+        document.getElementById('registerScreen').classList.add('hidden');
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        document.getElementById('adminScreen').classList.add('hidden');
+        
+        currentScreen = screenId;
+        localStorage.setItem('rxwin_current_screen', screenId);
+
+        if(screenId === 'gameScreen') {
+            document.getElementById('gameScreen').classList.remove('hidden');
+            if(currentUser) {
+                document.getElementById('userDisplay').innerText = `Phone: ${currentUser.phone} | UID: ${currentUser.uid}`;
+                document.getElementById('walletBalance').innerText = currentUser.balance.toFixed(2);
+            }
+        } else if(screenId === 'adminScreen') {
+            document.getElementById('adminScreen').classList.remove('hidden');
+            renderAdminPanel();
+        } else {
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+    }
+
+    function registerUser() {
+        let phone = document.getElementById('regPhone').value.trim();
+        let pass = document.getElementById('regPass').value.trim();
+        let cpass = document.getElementById('regCpass').value.trim();
+
+        if(!phone || !pass || !cpass) { alert("Please fill all fields"); return; }
+        if(pass !== cpass) { alert("Password and Confirm Password do not match!"); return; }
+
+        let existing = db.users.find(u => u.phone === phone);
+        if(existing) { alert("Number has already registered!"); return; }
+
+        let newUser = {
+            phone: phone,
+            pass: pass,
+            balance: 0,
+            uid: Math.floor(100000 + Math.random() * 900000),
+            isActive: true,
+            isAdmin: false
+        };
+        db.users.push(newUser);
+        saveDb();
+        alert("Registration Successful! Please login.");
+        switchScreen('loginScreen');
+    }
+
+    function loginUser() {
+        let phoneInput = document.getElementById('logPhone').value.trim();
+        let pass = document.getElementById('logPass').value.trim();
+
+        // Check Admin Credentials
+        if(phoneInput === "55567186483" && pass === "rxwingzull0") {
+            currentUser = { phone: "Admin", isAdmin: true, uid: "ADMIN" };
+            localStorage.setItem('rxwin_current_user', JSON.stringify(currentUser));
+            switchScreen('adminScreen');
+            return;
+        }
+
+        let user = db.users.find(u => u.phone === phoneInput);
+        if(!user) { alert("Number not registered!"); return; }
+        if(!user.isActive) { alert("Your account has been deactivated by Admin."); return; }
+        if(user.pass !== pass) { alert("Incorrect password!"); return; }
+
+        currentUser = user;
+        localStorage.setItem('rxwin_current_user', JSON.stringify(currentUser));
+        switchScreen('gameScreen');
+    }
+
+    function openAdminLoginModal() {
+        document.getElementById('logPhone').value = "55567186483";
+        document.getElementById('logPass').value = "rxwingzull0";
+        alert("Admin credentials pre-filled. Click Log In.");
+    }
+
+    function secretAdminAccess() {
+        let pin = prompt("Enter Secret Admin Passcode or ID:");
+        if(pin === "55567186483" || pin === "rxwingzull0") {
+            currentUser = { phone: "Admin", isAdmin: true, uid: "ADMIN" };
+            localStorage.setItem('rxwin_current_user', JSON.stringify(currentUser));
+            switchScreen('adminScreen');
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('rxwin_current_user');
+        localStorage.removeItem('rxwin_current_screen');
+        currentUser = null;
+        switchScreen('loginScreen');
+    }
+
+    // Global Timer & Persistent Automated Round Processor
+    let calculatedPeriodStr = "";
+
+    function checkAndProcessGlobalRounds() {
+        // Sync database from storage
+        let latestDb = JSON.parse(localStorage.getItem('rxwin_db'));
+        if(latestDb) db = latestDb;
+
+        let now = new Date();
+        let utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        let istDate = new Date(utc + (3600000 * 5.5));
+
+        let seconds = istDate.getSeconds();
+        let remainingSeconds = 60 - seconds;
+        let minutes = istDate.getMinutes();
+        let totalMinutes = istDate.getHours() * 60 + minutes;
+
+        let yyyyMMdd = istDate.toISOString().slice(0,10).replace(/-/g,'');
+        calculatedPeriodStr = yyyyMMdd + "1000" + (10001 + totalMinutes - 330);
+
+        // Update UI elements if on game screen
+        if(document.getElementById('periodNumber')) {
+            document.getElementById('periodNumber').innerText = calculatedPeriodStr;
+            let formattedSec = remainingSeconds < 10 ? "0" + remainingSeconds : remainingSeconds;
+            document.getElementById('timerClock').innerText = `00:${formattedSec}`;
+        }
+
+        // Sync live wallet balance if user is logged in
+        if(currentUser && !currentUser.isAdmin) {
+            let liveUser = db.users.find(u => u.phone === currentUser.phone);
+            if(liveUser) {
+                currentUser = liveUser;
+                localStorage.setItem('rxwin_current_user', JSON.stringify(currentUser));
+                if(document.getElementById('walletBalance')) {
+                    document.getElementById('walletBalance').innerText = currentUser.balance.toFixed(2);
+                }
+            }
+        }
+
+        renderHistoryTable();
+
+        // Trigger round evaluation exactly when timer hits 60/00 seconds transition
+        if(remainingSeconds === 60) {
+            evaluateRoundForPeriod(calculatedPeriodStr);
+        }
+    }
+
+    function placeBet(type) {
+        if(!currentUser || currentUser.isAdmin) return;
+        let amtStr = prompt(`You selected ${type}. Enter bet amount (Min ₹1):`);
+        if(!amtStr) return;
+        let amount = parseFloat(amtStr);
+
+        let liveUser = db.users.find(u => u.phone === currentUser.phone);
+        if(isNaN(amount) || amount < 1) { alert("Minimum bet is ₹1"); return; }
+        if(liveUser.balance < amount) {
+            alert("Insufficient balance! Please deposit to play.");
+            openDeposit();
+            return;
+        }
+
+        // Deduct balance immediately
+        liveUser.balance -= amount;
+        updateUserInDbGlobal(liveUser);
+
+        // Record active bet for current period
+        db.activeBets.push({
+            phone: currentUser.phone,
+            period: calculatedPeriodStr,
+            choice: type,
+            amount: amount
+        });
+        saveDb();
+        alert(`Successfully placed bet of ₹${amount} on ${type}!`);
+    }
+
+    function evaluateRoundForPeriod(targetPeriod) {
+        // Ensure round for this period hasn't already been evaluated
+        if(db.history.some(h => h.period === targetPeriod)) return;
+
+        // Determine outcome (Admin override or random)
+        let result = db.forcedResult;
+        if(result !== "Big" && result !== "Small") {
+            result = Math.random() < 0.5 ? "Big" : "Small";
+        }
+        let randNum = result === "Big" ? Math.floor(Math.random() * 5) + 5 : Math.floor(Math.random() * 5);
+
+        // Push to global history (Max 10 records)
+        db.history.unshift({ period: targetPeriod, number: randNum, result: result });
+        if(db.history.length > 10) db.history.pop();
+        db.forcedResult = ""; // Reset override
+        saveDb();
+
+        // Evaluate all pending bets for this specific period
+        let roundBets = db.activeBets.filter(b => b.period === targetPeriod);
+        roundBets.forEach(b => {
+            let u = db.users.find(usr => usr.phone === b.phone);
+            if(u) {
+                if(b.choice === result) {
+                    let winProfit = b.amount * 0.96; // 96% profit added
+                    u.balance += (b.amount + winProfit);
+                }
+                // Loss: Staked amount was already deducted when placed.
+            }
+        });
+
+        // Clear active bets for this period
+        db.activeBets = db.activeBets.filter(b => b.period !== targetPeriod);
+        saveDb();
+    }
+
+    function renderHistoryTable() {
+        let tbody = document.getElementById('historyBody');
+        if(!tbody) return;
+        tbody.innerHTML = "";
+        let hist = db.history.slice(0, 10);
+        hist.forEach(h => {
+            let tr = document.createElement('tr');
+            let color = h.result === 'Big' ? '#e0912e' : '#2493ff';
+            tr.innerHTML = `<td>${h.period}</td><td>${h.number}</td><td style="color:${color}; font-weight:bold;">${h.result}</td>`;
+            tbody.innerHTML += tr;
+        });
+    }
+
+    function updateUserInDbGlobal(updatedUser) {
+        let idx = db.users.findIndex(u => u.phone === updatedUser.phone);
+        if(idx !== -1) {
+            db.users[idx] = updatedUser;
+            saveDb();
+            currentUser = updatedUser;
+            localStorage.setItem('rxwin_current_user', JSON.stringify(currentUser));
+            if(document.getElementById('walletBalance')) {
+                document.getElementById('walletBalance').innerText = currentUser.balance.toFixed(2);
+            }
+        }
+    }
+
+    // Deposit & Withdraw Modals & History
+    function openDeposit() {
+        document.getElementById('adminQrImg').src = db.qr;
+        document.getElementById('depositModal').classList.remove('hidden');
+    }
+
+    function submitDeposit() {
+        let amount = parseFloat(document.getElementById('depAmount').value);
+        let utr = document.getElementById('depUtr').value.trim();
+
+        if(isNaN(amount) || amount < 10) { alert("Minimum deposit is ₹10"); return; }
+        if(utr.length !== 12) { alert("Invalid UTR! Must be exactly 12 digits."); return; }
+
+        db.deposits.push({
+            id: Date.now(),
+            phone: currentUser.phone,
+            amount: amount,
+            utr: utr,
+            status: 'Pending'
+        });
+        saveDb();
+        alert("Deposit submitted successfully! Awaiting admin verification.");
+        closeModals();
+    }
+
+    function openWithdraw() {
+        document.getElementById('withdrawModal').classList.remove('hidden');
+    }
+
+    function submitWithdraw() {
+        let name = document.getElementById('witName').value.trim();
+        let upi = document.getElementById('witUpi').value.trim();
+        let amount = parseFloat(document.getElementById('witAmount').value);
+
+        if(!name || !upi || isNaN(amount)) { alert("Please fill all details"); return; }
+        if(amount > currentUser.balance) { alert("Insufficient balance!"); return; }
+
+        currentUser.balance -= amount;
+        updateUserInDbGlobal(currentUser);
+
+        db.withdraws.push({
+            id: Date.now(),
+            phone: currentUser.phone,
+            name: name,
+            upi: upi,
+            amount: amount,
+            status: 'Pending'
+        });
+        saveDb();
+        alert("Withdraw request submitted successfully!");
+        closeModals();
+    }
+
+    function openDepositHistory() {
+        let myDeps = db.deposits.filter(d => d.phone === currentUser.phone);
+        let html = myDeps.length === 0 ? "No deposit history found." : "";
+        myDeps.forEach(d => {
+            let color = d.status === 'Approved' ? '#2ecc71' : (d.status === 'Rejected' ? '#e74c3c' : '#e0b32e');
+            html += `<div style="background:#181b26; padding:10px; margin-bottom:8px; border-radius:6px;">
+                Amount: ₹${d.amount} | UTR: ${d.utr}<br>Status: <span style="color:${color}; font-weight:bold;">${d.status}</span>
+            </div>`;
+        });
+        document.getElementById('histModalTitle').innerText = "Deposit History";
+        document.getElementById('histModalContent').innerHTML = html;
+        document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function openWithdrawHistory() {
+        let myWits = db.withdraws.filter(w => w.phone === currentUser.phone);
+        let html = myWits.length === 0 ? "No withdraw history found." : "";
+        myWits.forEach(w => {
+            let color = w.status === 'Approved' ? '#2ecc71' : (w.status === 'Rejected' ? '#e74c3c' : '#e0b32e');
+            html += `<div style="background:#181b26; padding:10px; margin-bottom:8px; border-radius:6px;">
+                Amount: ₹${w.amount} | UPI: ${w.upi}<br>Status: <span style="color:${color}; font-weight:bold;">${w.status}</span>
+            </div>`;
+        });
+        document.getElementById('histModalTitle').innerText = "Withdraw History";
+        document.getElementById('histModalContent').innerHTML = html;
+        document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    }
+
+    // Admin Panel Functions
+    function renderAdminPanel() {
+        let latestDb = JSON.parse(localStorage.getItem('rxwin_db'));
+        if(latestDb) db = latestDb;
+
+        document.getElementById('admTotalUsers').innerText = db.users.length;
+        document.getElementById('admTotalRounds').innerText = db.history.length;
+        document.getElementById('admCurrentPeriod').innerText = calculatedPeriodStr || "--";
+
+        // Render Users & Activation Switches
+        let usrHtml = "";
+        db.users.forEach(u => {
+            usrHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:#181b26; padding:6px 10px; margin-bottom:5px; border-radius:4px;">
+                <span>${u.phone} (₹${u.balance.toFixed(2)})</span>
+                <button class="btn" style="padding:4px 8px; margin:0; background:${u.isActive?'#e74c3c':'#2ecc71'}; font-size:12px;" onclick="toggleUserStatus('${u.phone}')">${u.isActive?'Deactivate':'Activate'}</button>
+            </div>`;
+        });
+        document.getElementById('admUserList').innerHTML = usrHtml || "No users registered yet.";
+
+        // Render Deposits
+        let depHtml = "";
+        db.deposits.forEach((d, index) => {
+            if(d.status === 'Pending') {
+                depHtml += `<div style="background:#181b26; padding:8px; margin-bottom:6px; border-radius:4px;">
+                    <div>${d.phone} - ₹${d.amount} (UTR: ${d.utr})</div>
+                    <div style="margin-top:5px; display:flex; gap:5px;">
+                        <button class="btn-green" style="flex:1; padding:4px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="processDeposit(${index}, 'Approved')">Approve</button>
+                        <button class="btn-red" style="flex:1; padding:4px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="processDeposit(${index}, 'Rejected')">Reject</button>
+                    </div>
+                </div>`;
+            }
+        });
+        document.getElementById('admDepositList').innerHTML = depHtml || "No pending deposits.";
+
+        // Render Withdrawals
+        let witHtml = "";
+        db.withdraws.forEach((w, index) => {
+            if(w.status === 'Pending') {
+                witHtml += `<div style="background:#181b26; padding:8px; margin-bottom:6px; border-radius:4px;">
+                    <div>${w.phone} - ₹${w.amount} (${w.upi})</div>
+                    <div style="margin-top:5px; display:flex; gap:5px;">
+                        <button class="btn-green" style="flex:1; padding:4px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="processWithdraw(${index}, 'Approved')">Approve</button>
+                        <button class="btn-red" style="flex:1; padding:4px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="processWithdraw(${index}, 'Rejected')">Reject</button>
+                    </div>
+                </div>`;
+            }
+        });
+        document.getElementById('admWithdrawList').innerHTML = witHtml || "No pending withdrawals.";
+    }
+
+    function saveAdminOverride() {
+        let val = document.getElementById('admForceOutcome').value;
+        db.forcedResult = val;
+        saveDb();
+        alert(`Admin override set to: ${val ? val : "Natural / Random"}`);
+    }
+
+    function toggleUserStatus(phone) {
+        let u = db.users.find(usr => usr.phone === phone);
+        if(u) {
+            u.isActive = !u.isActive;
+            saveDb();
+            renderAdminPanel();
+        }
+    }
+
+    function processDeposit(index, status) {
+        let dep = db.deposits[index];
+        if(dep && dep.status === 'Pending') {
+            dep.status = status;
+            if(status === 'Approved') {
+                let u = db.users.find(usr => usr.phone === dep.phone);
+                if(u) u.balance += dep.amount;
+            }
+            saveDb();
+            renderAdminPanel();
+        }
+    }
+
+    function processWithdraw(index, status) {
+        let wit = db.withdraws[index];
+        if(wit && wit.status === 'Pending') {
+            wit.status = status;
+            if(status === 'Rejected') {
+                // Refund balance if rejected
+                let u = db.users.find(usr => usr.phone === wit.phone);
+                if(u) u.balance += wit.amount;
+            }
+            saveDb();
+            renderAdminPanel();
+        }
+    }
+</script>
+</body>
+</html>
